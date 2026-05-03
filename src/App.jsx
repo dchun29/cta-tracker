@@ -49,7 +49,7 @@ const CTA_LINES = {
     { name: "Montrose", id: "41420" }, { name: "Irving Park", id: "40570" }, { name: "Addison", id: "41500" },
     { name: "Paulina", id: "40660" }, { name: "Southport", id: "41220" }, { name: "Belmont", id: "40530" },
     { name: "Fullerton", id: "40800" }, { name: "Diversey", id: "40460" }, { name: "Wellington", id: "40900" },
-    { name: "Sedgwick", id: "40830" }, { name: "Chicago", id: "40710" }, { name: "Merchandise Mart", id: "40490" },
+    { name: "Sedgwick", id: "40830" }, { name: "Chicago", id: "40710" }, { name: "Merchandise Mart", id: "40490" }, { name: "Quincy", id: "40040" },
     { name: "Clark/Lake", id: "40490" },
   ]},
   Green: { color: "#009B3A", textDark: false, directions: ["Harlem/Lake", "Cottage Grove"], stops: [
