@@ -4,7 +4,6 @@ const API_KEY = "cac8352b67f24492ac18c7473161860b";
 
 const COLORS = {
   navy: "#1B3A6B",
-  blue: "#0066CC",
   white: "#FFFFFF",
   offWhite: "#F5F7FA",
   gray100: "#F0F2F5",
@@ -14,6 +13,8 @@ const COLORS = {
   gray900: "#1A2330",
   success: "#1A7F4B",
   danger: "#C0392B",
+  warning: "#92610A",
+  warningBg: "#FEF3C7",
 };
 
 const CTA_LINES = {
@@ -95,27 +96,15 @@ async function fetchLiveArrivals(stopId, line) {
     const res = await fetch(url);
     const data = await res.json();
     const etas = data?.ctatt?.eta;
-    if (!etas || etas.length === 0) return null;
-    return etas.map(e => {
+    if (!etas || etas.length === 0) return { status: "no_service", arrivals: [] };
+    const arrivals = etas.map(e => {
       const mins = Math.max(0, Math.round((new Date(e.arrT.replace("T", " ") + " GMT-0500") - new Date()) / 60000));
       return { destNm: e.destNm, _mins: mins, isDly: e.isDly === "1" };
     });
+    return { status: "live", arrivals };
   } catch (err) {
-    return null;
+    return { status: "error", arrivals: [] };
   }
-}
-
-function getMockArrivals(line) {
-  const ld = CTA_LINES[line];
-  const [d1, d2] = ld.directions;
-  return [
-    { destNm: d1, _mins: 3, isDly: false },
-    { destNm: d2, _mins: 5, isDly: false },
-    { destNm: d1, _mins: 13, isDly: false },
-    { destNm: d2, _mins: 15, isDly: false },
-    { destNm: d1, _mins: 23, isDly: false },
-    { destNm: d2, _mins: 25, isDly: false },
-  ];
 }
 
 function TopBar({ view, line, stop, onBack }) {
@@ -180,7 +169,6 @@ function DirectionColumn({ label, arrivals, lineColor }) {
   const urgent = arrivals[0]?._mins <= 2;
   return (
     <div style={{ flex:1,background:COLORS.white,borderRadius:16,overflow:"hidden",border:`1.5px solid ${urgent?lineColor+"66":COLORS.gray200}`,boxShadow:"0 1px 5px rgba(0,0,0,0.07)" }}>
-      {/* Direction header */}
       <div style={{ background:lineColor,padding:"10px 12px",display:"flex",alignItems:"center",gap:6 }}>
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
           <circle cx="12" cy="12" r="10" stroke="white" strokeWidth="2.5"/>
@@ -190,14 +178,17 @@ function DirectionColumn({ label, arrivals, lineColor }) {
           To {label}
         </div>
       </div>
-      {/* Arrivals */}
       {arrivals.length === 0 ? (
-        <div style={{ padding:"16px 12px",textAlign:"center",fontSize:11,color:COLORS.gray400,fontFamily:"'DM Sans',sans-serif" }}>No trains</div>
+        <div style={{ padding:"16px 12px",textAlign:"center" }}>
+          <div style={{ fontSize:18,marginBottom:4 }}>🌙</div>
+          <div style={{ fontSize:11,fontWeight:600,color:COLORS.gray600,fontFamily:"'DM Sans',sans-serif" }}>No service</div>
+          <div style={{ fontSize:10,color:COLORS.gray400,marginTop:2,fontFamily:"'DM Sans',sans-serif",lineHeight:1.4 }}>Check back during operating hours</div>
+        </div>
       ) : (
         arrivals.slice(0,3).map((a,i) => {
           const isUrgent = a._mins <= 2;
           return (
-            <div key={i} style={{ padding:"12px",borderBottom:i<2?`1px solid ${COLORS.gray100}`:"none",display:"flex",alignItems:"center",justifyContent:"space-between" }}>
+            <div key={i} style={{ padding:"12px",borderBottom:i<Math.min(arrivals.length,3)-1?`1px solid ${COLORS.gray100}`:"none",display:"flex",alignItems:"center",justifyContent:"space-between" }}>
               <div style={{ fontSize:11,color:a.isDly?COLORS.danger:isUrgent?lineColor:COLORS.gray600,fontWeight:600,fontFamily:"'DM Sans',sans-serif" }}>
                 {a.isDly?"Delayed":isUrgent?"Now":"Scheduled"}
               </div>
@@ -222,15 +213,15 @@ export default function CTATracker() {
   const [arrivals, setArrivals] = useState([]);
   const [loading, setLoading] = useState(false);
   const [lastRefresh, setLastRefresh] = useState(null);
-  const [isLive, setIsLive] = useState(false);
+  const [serviceStatus, setServiceStatus] = useState("live");
 
   const timeStr = new Date().toLocaleTimeString([], { hour:"2-digit", minute:"2-digit" });
 
   const load = useCallback(async (stopObj, line) => {
     setLoading(true);
-    const live = await fetchLiveArrivals(stopObj.id, line);
-    if (live && live.length > 0) { setArrivals(live); setIsLive(true); }
-    else { setArrivals(getMockArrivals(line)); setIsLive(false); }
+    const result = await fetchLiveArrivals(stopObj.id, line);
+    setServiceStatus(result.status);
+    setArrivals(result.arrivals);
     setLastRefresh(new Date());
     setLoading(false);
   }, []);
@@ -243,11 +234,15 @@ export default function CTATracker() {
   };
 
   const ld = selectedLine ? CTA_LINES[selectedLine] : null;
-
-  // Split arrivals into two direction columns
   const [dir1, dir2] = ld?.directions || ["", ""];
   const col1 = arrivals.filter(a => a.destNm.toLowerCase().includes(dir1.split("/")[0].toLowerCase()) || a.destNm.toLowerCase().includes(dir1.split(" ")[0].toLowerCase()));
   const col2 = arrivals.filter(a => !col1.includes(a));
+
+  const statusDisplay = {
+    live: { dot: COLORS.success, text: "🟢 Live" },
+    no_service: { dot: "#F59E0B", text: "🌙 No service" },
+    error: { dot: COLORS.danger, text: "⚠️ Error" },
+  }[serviceStatus] || { dot: COLORS.gray400, text: "..." };
 
   return (
     <>
@@ -303,7 +298,6 @@ export default function CTATracker() {
 
           {view==="arrivals" && ld && (
             <div>
-              {/* Station info card */}
               <div style={{ background:COLORS.white,borderRadius:16,padding:"16px 18px",marginBottom:16,boxShadow:"0 1px 6px rgba(0,0,0,0.08)",border:`1px solid ${COLORS.gray200}`,display:"flex",alignItems:"center",gap:14 }}>
                 <div style={{ width:46,height:46,borderRadius:13,background:ld.color,flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:`0 3px 10px ${ld.color}44` }}>
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
@@ -314,29 +308,42 @@ export default function CTATracker() {
                 <div style={{ flex:1 }}>
                   <div style={{ fontSize:19,fontWeight:800,color:COLORS.gray900,letterSpacing:"-0.01em" }}>{selectedStop?.name}</div>
                   <div style={{ fontSize:12,color:COLORS.gray400,marginTop:2 }}>
-                    {selectedLine} Line · {isLive?"🟢 Live":"⚪ Demo"}{lastRefresh?` · ${lastRefresh.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}` : ""}
+                    {selectedLine} Line · {statusDisplay.text}{lastRefresh?` · ${lastRefresh.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}` : ""}
                   </div>
                 </div>
               </div>
 
-              <div style={{ fontSize:11,fontWeight:700,color:COLORS.gray400,letterSpacing:"0.09em",textTransform:"uppercase",marginBottom:10,paddingLeft:2 }}>Next arrivals</div>
-
-              {loading ? (
-                <div style={{ display:"flex",gap:10 }}>
-                  {[0,1].map(i=><div key={i} style={{ flex:1,background:COLORS.white,borderRadius:16,height:180,border:`1px solid ${COLORS.gray200}`,animation:`pulse 1.3s ease infinite`,animationDelay:`${i*0.18}s` }}/>)}
-                </div>
-              ) : (
-                <div className="enter" style={{ display:"flex",gap:10 }}>
-                  <DirectionColumn label={dir1} arrivals={col1} lineColor={ld.color}/>
-                  <DirectionColumn label={dir2} arrivals={col2} lineColor={ld.color}/>
+              {serviceStatus === "no_service" && (
+                <div style={{ background:COLORS.warningBg,borderRadius:14,padding:"14px 16px",marginBottom:14,display:"flex",gap:12,alignItems:"flex-start",border:`1px solid #FCD34D` }}>
+                  <span style={{ fontSize:20,flexShrink:0 }}>🌙</span>
+                  <div>
+                    <div style={{ fontSize:13,fontWeight:700,color:COLORS.warning,fontFamily:"'DM Sans',sans-serif" }}>No trains currently running</div>
+                    <div style={{ fontSize:12,color:COLORS.warning,marginTop:3,lineHeight:1.5,fontFamily:"'DM Sans',sans-serif" }}>
+                      The {selectedLine} Line is not in service at this time. Most CTA lines run daily from around 4 AM to 1 AM.
+                    </div>
+                  </div>
                 </div>
               )}
 
-              {!loading && (
-                <button onClick={()=>load(selectedStop,selectedLine)} style={{ width:"100%",marginTop:14,padding:"15px",background:COLORS.navy,border:"none",borderRadius:14,color:"white",fontSize:15,fontWeight:700,fontFamily:"'DM Sans',sans-serif",cursor:"pointer" }}>
-                  Refresh Arrivals
-                </button>
+              {serviceStatus !== "no_service" && (
+                <>
+                  <div style={{ fontSize:11,fontWeight:700,color:COLORS.gray400,letterSpacing:"0.09em",textTransform:"uppercase",marginBottom:10,paddingLeft:2 }}>Next arrivals</div>
+                  {loading ? (
+                    <div style={{ display:"flex",gap:10 }}>
+                      {[0,1].map(i=><div key={i} style={{ flex:1,background:COLORS.white,borderRadius:16,height:180,border:`1px solid ${COLORS.gray200}`,animation:`pulse 1.3s ease infinite`,animationDelay:`${i*0.18}s` }}/>)}
+                    </div>
+                  ) : (
+                    <div className="enter" style={{ display:"flex",gap:10 }}>
+                      <DirectionColumn label={dir1} arrivals={col1} lineColor={ld.color}/>
+                      <DirectionColumn label={dir2} arrivals={col2} lineColor={ld.color}/>
+                    </div>
+                  )}
+                </>
               )}
+
+              <button onClick={()=>load(selectedStop,selectedLine)} style={{ width:"100%",marginTop:14,padding:"15px",background:COLORS.navy,border:"none",borderRadius:14,color:"white",fontSize:15,fontWeight:700,fontFamily:"'DM Sans',sans-serif",cursor:"pointer" }}>
+                Refresh Arrivals
+              </button>
             </div>
           )}
         </div>
