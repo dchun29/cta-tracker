@@ -92,7 +92,7 @@ const RT_MAP = { Red: "Red", Blue: "Blue", Brown: "Brn", Green: "G", Orange: "Or
 async function fetchLiveArrivals(stopId, line) {
   try {
     const rt = RT_MAP[line];
-    const url = `https://lapi.transitchicago.com/api/1.0/ttarrivals.aspx?key=${API_KEY}&mapid=${stopId}&rt=${rt}&outputType=JSON`;
+    const url = `/api/cta/ttarrivals.aspx?key=${API_KEY}&mapid=${stopId}&rt=${rt}&outputType=JSON`;
     const res = await fetch(url);
     const data = await res.json();
     const etas = data?.ctatt?.eta;

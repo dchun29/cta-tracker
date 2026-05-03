@@ -1,0 +1,10 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/cta/:path*",
+      "destination": "https://lapi.transitchicago.com/api/1.0/:path*"
+    }
+  ]
+}
+
+
