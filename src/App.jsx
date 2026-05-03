@@ -1,11 +1,10 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 
 const API_KEY = "cac8352b67f24492ac18c7473161860b";
 
 const COLORS = {
   navy: "#1B3A6B",
   blue: "#0066CC",
-  blueLight: "#E8F0FA",
   white: "#FFFFFF",
   offWhite: "#F5F7FA",
   gray100: "#F0F2F5",
@@ -18,7 +17,7 @@ const COLORS = {
 };
 
 const CTA_LINES = {
-  Red:    { color: "#C8102E", textDark: false, stops: [
+  Red:    { color: "#C8102E", textDark: false, directions: ["Howard", "95th/Dan Ryan"], stops: [
     { name: "Howard", id: "40900" }, { name: "Loyola", id: "41190" }, { name: "Granville", id: "40760" },
     { name: "Thorndale", id: "40880" }, { name: "Bryn Mawr", id: "40340" }, { name: "Berwyn", id: "40780" },
     { name: "Argyle", id: "40980" }, { name: "Lawrence", id: "40770" }, { name: "Wilson", id: "41200" },
@@ -30,7 +29,7 @@ const CTA_LINES = {
     { name: "Garfield", id: "40380" }, { name: "63rd", id: "41170" }, { name: "69th", id: "40910" },
     { name: "79th", id: "40390" }, { name: "87th", id: "40980" }, { name: "95th/Dan Ryan", id: "40100" },
   ]},
-  Blue: { color: "#00A1DE", textDark: false, stops: [
+  Blue: { color: "#00A1DE", textDark: false, directions: ["O'Hare", "Forest Park"], stops: [
     { name: "O'Hare", id: "40890" }, { name: "Rosemont", id: "40820" }, { name: "Cumberland", id: "40230" },
     { name: "Harlem", id: "40750" }, { name: "Jefferson Park", id: "41280" }, { name: "Montrose", id: "41330" },
     { name: "Irving Park", id: "41240" }, { name: "Addison", id: "40550" }, { name: "Belmont", id: "41060" },
@@ -43,7 +42,7 @@ const CTA_LINES = {
     { name: "Kedzie-Homan", id: "40460" }, { name: "Pulaski", id: "40850" }, { name: "Cicero", id: "40670" },
     { name: "54th/Cermak", id: "40440" },
   ]},
-  Brown: { color: "#62361B", textDark: false, stops: [
+  Brown: { color: "#62361B", textDark: false, directions: ["Kimball", "Loop"], stops: [
     { name: "Kimball", id: "41290" }, { name: "Kedzie", id: "41180" }, { name: "Francisco", id: "40870" },
     { name: "Rockwell", id: "41010" }, { name: "Western", id: "41150" }, { name: "Damen", id: "40090" },
     { name: "Montrose", id: "41420" }, { name: "Irving Park", id: "40570" }, { name: "Addison", id: "41500" },
@@ -52,7 +51,7 @@ const CTA_LINES = {
     { name: "Sedgwick", id: "40830" }, { name: "Chicago", id: "40710" }, { name: "Merchandise Mart", id: "40490" },
     { name: "Clark/Lake", id: "40490" },
   ]},
-  Green: { color: "#009B3A", textDark: false, stops: [
+  Green: { color: "#009B3A", textDark: false, directions: ["Harlem/Lake", "Cottage Grove"], stops: [
     { name: "Harlem/Lake", id: "40020" }, { name: "Oak Park", id: "41350" }, { name: "Ridgeland", id: "40610" },
     { name: "Austin", id: "41260" }, { name: "Central", id: "40280" }, { name: "Laramie", id: "41020" },
     { name: "Cicero", id: "40700" }, { name: "Pulaski", id: "40480" }, { name: "Conservatory", id: "40030" },
@@ -64,25 +63,25 @@ const CTA_LINES = {
     { name: "51st", id: "41080" }, { name: "Garfield", id: "40990" }, { name: "Halsted", id: "40180" },
     { name: "Ashland/63rd", id: "40130" }, { name: "Cottage Grove", id: "40510" },
   ]},
-  Orange: { color: "#F9461C", textDark: false, stops: [
+  Orange: { color: "#F9461C", textDark: false, directions: ["Midway", "Loop"], stops: [
     { name: "Midway", id: "40930" }, { name: "Pulaski", id: "41070" }, { name: "Kedzie", id: "41130" },
     { name: "Western", id: "41150" }, { name: "35th/Archer", id: "40310" }, { name: "Ashland", id: "41060" },
     { name: "Halsted", id: "40120" }, { name: "Roosevelt", id: "41400" }, { name: "Library", id: "40680" },
     { name: "State/Lake", id: "40260" }, { name: "Clark/Lake", id: "40490" },
   ]},
-  Pink: { color: "#E27EA6", textDark: false, stops: [
+  Pink: { color: "#E27EA6", textDark: false, directions: ["54th/Cermak", "Loop"], stops: [
     { name: "54th/Cermak", id: "40580" }, { name: "Cicero", id: "40420" }, { name: "Kostner", id: "40600" },
     { name: "Pulaski", id: "40150" }, { name: "Central Park", id: "40780" }, { name: "Kedzie", id: "40540" },
     { name: "California", id: "40020" }, { name: "Western", id: "40440" }, { name: "Damen", id: "40740" },
     { name: "18th", id: "41160" }, { name: "Polk", id: "40830" }, { name: "Morgan", id: "41040" },
     { name: "Clinton", id: "40210" }, { name: "Clark/Lake", id: "40490" },
   ]},
-  Purple: { color: "#522398", textDark: false, stops: [
+  Purple: { color: "#522398", textDark: false, directions: ["Linden", "Howard"], stops: [
     { name: "Linden", id: "41050" }, { name: "Central", id: "40040" }, { name: "Noyes", id: "40140" },
     { name: "Foster", id: "40840" }, { name: "Davis", id: "40900" }, { name: "Dempster", id: "40270" },
     { name: "Main", id: "40400" }, { name: "South Blvd", id: "40900" }, { name: "Howard", id: "40900" },
   ]},
-  Yellow: { color: "#F9E300", textDark: true, stops: [
+  Yellow: { color: "#F9E300", textDark: true, directions: ["Dempster-Skokie", "Howard"], stops: [
     { name: "Howard", id: "40900" }, { name: "Dempster-Skokie", id: "41680" },
   ]},
 };
@@ -106,14 +105,17 @@ async function fetchLiveArrivals(stopId, line) {
   }
 }
 
-function getMockArrivals(stop, line) {
-  const dests = { Red: ["95th/Dan Ryan","Howard"], Blue: ["O'Hare","Forest Park"], Brown: ["Kimball","Loop"], Green: ["Cottage Grove","Harlem/Lake"], Orange: ["Midway","Loop"], Pink: ["54th/Cermak","Loop"], Purple: ["Linden","Loop"], Yellow: ["Dempster-Skokie","Howard"] };
-  const d = dests[line] || ["Loop","Terminal"];
-  return [0,1,2].map(i => ({
-    destNm: d[i % 2],
-    _mins: [Math.floor(Math.random()*3)+1, Math.floor(Math.random()*6)+6, Math.floor(Math.random()*9)+14][i],
-    isDly: Math.random() < 0.08,
-  }));
+function getMockArrivals(line) {
+  const ld = CTA_LINES[line];
+  const [d1, d2] = ld.directions;
+  return [
+    { destNm: d1, _mins: 3, isDly: false },
+    { destNm: d2, _mins: 5, isDly: false },
+    { destNm: d1, _mins: 13, isDly: false },
+    { destNm: d2, _mins: 15, isDly: false },
+    { destNm: d1, _mins: 23, isDly: false },
+    { destNm: d2, _mins: 25, isDly: false },
+  ];
 }
 
 function TopBar({ view, line, stop, onBack }) {
@@ -174,32 +176,41 @@ function StopRow({ name, lineColor, index, total, onSelect }) {
   );
 }
 
-function ArrivalRow({ arrival, lineColor }) {
-  const m = arrival._mins;
-  const urgent = m <= 2;
-  const delayed = arrival.isDly;
+function DirectionColumn({ label, arrivals, lineColor }) {
+  const urgent = arrivals[0]?._mins <= 2;
   return (
-    <div style={{ background:COLORS.white,borderRadius:16,padding:"16px 18px",display:"flex",alignItems:"center",gap:14,boxShadow:"0 1px 5px rgba(0,0,0,0.07)",border:urgent?`1.5px solid ${lineColor}66`:`1.5px solid ${COLORS.gray200}` }}>
-      <div style={{ width:44,height:44,borderRadius:12,flexShrink:0,background:urgent?lineColor:COLORS.gray100,display:"flex",alignItems:"center",justifyContent:"center" }}>
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-          <rect x="4" y="3" width="16" height="13" rx="3" stroke={urgent?"white":COLORS.gray400} strokeWidth="1.8"/>
-          <line x1="4" y1="12" x2="20" y2="12" stroke={urgent?"white":COLORS.gray400} strokeWidth="1.8"/>
-          <circle cx="8" cy="19" r="1.5" fill={urgent?lineColor:COLORS.gray400}/>
-          <circle cx="16" cy="19" r="1.5" fill={urgent?lineColor:COLORS.gray400}/>
+    <div style={{ flex:1,background:COLORS.white,borderRadius:16,overflow:"hidden",border:`1.5px solid ${urgent?lineColor+"66":COLORS.gray200}`,boxShadow:"0 1px 5px rgba(0,0,0,0.07)" }}>
+      {/* Direction header */}
+      <div style={{ background:lineColor,padding:"10px 12px",display:"flex",alignItems:"center",gap:6 }}>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="10" stroke="white" strokeWidth="2.5"/>
+          <path d="M8 12h8M14 8l4 4-4 4" stroke="white" strokeWidth="2" strokeLinecap="round"/>
         </svg>
-      </div>
-      <div style={{ flex:1 }}>
-        <div style={{ fontSize:15,fontWeight:600,color:COLORS.gray900,fontFamily:"'DM Sans',sans-serif" }}>To {arrival.destNm}</div>
-        <div style={{ fontSize:11,marginTop:3,fontWeight:600,fontFamily:"'DM Sans',sans-serif",color:delayed?COLORS.danger:urgent?lineColor:COLORS.gray400 }}>
-          {delayed?"DELAYED":urgent?"Arriving now":"Scheduled"}
+        <div style={{ fontSize:11,fontWeight:800,color:"white",letterSpacing:"0.04em",fontFamily:"'DM Sans',sans-serif",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis" }}>
+          To {label}
         </div>
       </div>
-      <div style={{ textAlign:"center",minWidth:52 }}>
-        <div style={{ fontSize:m<=0?14:28,fontWeight:800,color:delayed?COLORS.danger:urgent?lineColor:COLORS.gray900,fontFamily:"'DM Sans',sans-serif",lineHeight:1,letterSpacing:"-0.02em" }}>
-          {m<=0?"Due":String(m)}
-        </div>
-        {m>0&&<div style={{ fontSize:10,color:COLORS.gray400,marginTop:2,fontFamily:"'DM Sans',sans-serif" }}>min</div>}
-      </div>
+      {/* Arrivals */}
+      {arrivals.length === 0 ? (
+        <div style={{ padding:"16px 12px",textAlign:"center",fontSize:11,color:COLORS.gray400,fontFamily:"'DM Sans',sans-serif" }}>No trains</div>
+      ) : (
+        arrivals.slice(0,3).map((a,i) => {
+          const isUrgent = a._mins <= 2;
+          return (
+            <div key={i} style={{ padding:"12px",borderBottom:i<2?`1px solid ${COLORS.gray100}`:"none",display:"flex",alignItems:"center",justifyContent:"space-between" }}>
+              <div style={{ fontSize:11,color:a.isDly?COLORS.danger:isUrgent?lineColor:COLORS.gray600,fontWeight:600,fontFamily:"'DM Sans',sans-serif" }}>
+                {a.isDly?"Delayed":isUrgent?"Now":"Scheduled"}
+              </div>
+              <div style={{ textAlign:"right" }}>
+                <div style={{ fontSize:a._mins<=0?13:22,fontWeight:800,color:a.isDly?COLORS.danger:isUrgent?lineColor:COLORS.gray900,fontFamily:"'DM Sans',sans-serif",lineHeight:1,letterSpacing:"-0.02em" }}>
+                  {a._mins<=0?"Due":a._mins}
+                </div>
+                {a._mins>0&&<div style={{ fontSize:9,color:COLORS.gray400,fontFamily:"'DM Sans',sans-serif" }}>min</div>}
+              </div>
+            </div>
+          );
+        })
+      )}
     </div>
   );
 }
@@ -219,7 +230,7 @@ export default function CTATracker() {
     setLoading(true);
     const live = await fetchLiveArrivals(stopObj.id, line);
     if (live && live.length > 0) { setArrivals(live); setIsLive(true); }
-    else { setArrivals(getMockArrivals(stopObj.name, line)); setIsLive(false); }
+    else { setArrivals(getMockArrivals(line)); setIsLive(false); }
     setLastRefresh(new Date());
     setLoading(false);
   }, []);
@@ -232,6 +243,11 @@ export default function CTATracker() {
   };
 
   const ld = selectedLine ? CTA_LINES[selectedLine] : null;
+
+  // Split arrivals into two direction columns
+  const [dir1, dir2] = ld?.directions || ["", ""];
+  const col1 = arrivals.filter(a => a.destNm.toLowerCase().includes(dir1.split("/")[0].toLowerCase()) || a.destNm.toLowerCase().includes(dir1.split(" ")[0].toLowerCase()));
+  const col2 = arrivals.filter(a => !col1.includes(a));
 
   return (
     <>
@@ -287,6 +303,7 @@ export default function CTATracker() {
 
           {view==="arrivals" && ld && (
             <div>
+              {/* Station info card */}
               <div style={{ background:COLORS.white,borderRadius:16,padding:"16px 18px",marginBottom:16,boxShadow:"0 1px 6px rgba(0,0,0,0.08)",border:`1px solid ${COLORS.gray200}`,display:"flex",alignItems:"center",gap:14 }}>
                 <div style={{ width:46,height:46,borderRadius:13,background:ld.color,flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:`0 3px 10px ${ld.color}44` }}>
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
@@ -305,21 +322,18 @@ export default function CTATracker() {
               <div style={{ fontSize:11,fontWeight:700,color:COLORS.gray400,letterSpacing:"0.09em",textTransform:"uppercase",marginBottom:10,paddingLeft:2 }}>Next arrivals</div>
 
               {loading ? (
-                <div style={{ display:"flex",flexDirection:"column",gap:10 }}>
-                  {[0,1,2].map(i=><div key={i} style={{ background:COLORS.white,borderRadius:16,height:80,border:`1px solid ${COLORS.gray200}`,animation:`pulse 1.3s ease infinite`,animationDelay:`${i*0.18}s` }}/>)}
+                <div style={{ display:"flex",gap:10 }}>
+                  {[0,1].map(i=><div key={i} style={{ flex:1,background:COLORS.white,borderRadius:16,height:180,border:`1px solid ${COLORS.gray200}`,animation:`pulse 1.3s ease infinite`,animationDelay:`${i*0.18}s` }}/>)}
                 </div>
               ) : (
-                <div style={{ display:"flex",flexDirection:"column",gap:10 }}>
-                  {arrivals.map((a,i)=>(
-                    <div key={i} className="enter" style={{ animationDelay:`${i*55}ms`,animationFillMode:"both" }}>
-                      <ArrivalRow arrival={a} lineColor={ld.color}/>
-                    </div>
-                  ))}
+                <div className="enter" style={{ display:"flex",gap:10 }}>
+                  <DirectionColumn label={dir1} arrivals={col1} lineColor={ld.color}/>
+                  <DirectionColumn label={dir2} arrivals={col2} lineColor={ld.color}/>
                 </div>
               )}
 
               {!loading && (
-                <button onClick={()=>load(selectedStop,selectedLine)} style={{ width:"100%",marginTop:16,padding:"15px",background:COLORS.navy,border:"none",borderRadius:14,color:"white",fontSize:15,fontWeight:700,fontFamily:"'DM Sans',sans-serif",cursor:"pointer" }}>
+                <button onClick={()=>load(selectedStop,selectedLine)} style={{ width:"100%",marginTop:14,padding:"15px",background:COLORS.navy,border:"none",borderRadius:14,color:"white",fontSize:15,fontWeight:700,fontFamily:"'DM Sans',sans-serif",cursor:"pointer" }}>
                   Refresh Arrivals
                 </button>
               )}
