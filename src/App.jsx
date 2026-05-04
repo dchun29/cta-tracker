@@ -182,7 +182,7 @@ function StopRow({ name, lineColor, index, total, onSelect, isFav, onToggleFav }
           <span style={{ fontSize:15,fontWeight:500,color:COLORS.gray900,fontFamily:"'DM Sans',sans-serif" }}>{name}</span>
         </div>
       </button>
-      <button onClick={onToggleFav} style={{ padding:"0 16px",background:"transparent",border:"none",cursor:"pointer",fontSize:18,display:"flex",alignItems:"center" }}>
+      <button onClick={onToggleFav} style={{ padding:"0 16px",background:"transparent",border:"none",cursor:"pointer",fontSize:20,color:"#F59E0B",display:"flex",alignItems:"center" }}>
         {isFav ? "⭐" : "☆"}
       </button>
     </div>
