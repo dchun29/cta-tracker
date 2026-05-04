@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 
 const API_KEY = "cac8352b67f24492ac18c7473161860b";
 
@@ -17,211 +17,93 @@ const COLORS = {
   warningBg: "#FEF3C7",
 };
 
-// All IDs verified against Chicago Data Portal (data.cityofchicago.org/resource/8pix-ypme)
 const CTA_LINES = {
   Red: { color: "#C8102E", textDark: false, directions: ["Howard", "95th/Dan Ryan"], stops: [
-    { name: "Howard", id: "40900" },
-    { name: "Jarvis", id: "41190" },
-    { name: "Morse", id: "40100" },
-    { name: "Loyola", id: "41300" },
-    { name: "Granville", id: "40760" },
-    { name: "Thorndale", id: "40880" },
-    { name: "Bryn Mawr", id: "41380" },
-    { name: "Berwyn", id: "40340" },
-    { name: "Argyle", id: "41200" },
-    { name: "Lawrence", id: "40770" },
-    { name: "Wilson", id: "40540" },
-    { name: "Sheridan", id: "40080" },
-    { name: "Addison", id: "41420" },
-    { name: "Belmont", id: "41320" },
-    { name: "Fullerton", id: "41220" },
-    { name: "North/Clybourn", id: "40650" },
-    { name: "Clark/Division", id: "40630" },
-    { name: "Chicago", id: "41450" },
-    { name: "Grand", id: "40330" },
-    { name: "Lake", id: "41660" },
-    { name: "Monroe", id: "41090" },
-    { name: "Jackson", id: "40560" },
-    { name: "Harrison", id: "41490" },
-    { name: "Cermak-Chinatown", id: "41000" },
-    { name: "Sox-35th", id: "40190" },
-    { name: "47th", id: "41230" },
-    { name: "Garfield", id: "41170" },
-    { name: "63rd", id: "40910" },
-    { name: "69th", id: "40990" },
-    { name: "79th", id: "40240" },
-    { name: "87th", id: "41430" },
-    { name: "95th/Dan Ryan", id: "40450" },
+    { name: "Howard", id: "40900" }, { name: "Jarvis", id: "41190" }, { name: "Morse", id: "40100" },
+    { name: "Loyola", id: "41300" }, { name: "Granville", id: "40760" }, { name: "Thorndale", id: "40880" },
+    { name: "Bryn Mawr", id: "41380" }, { name: "Berwyn", id: "40340" }, { name: "Argyle", id: "41200" },
+    { name: "Lawrence", id: "40770" }, { name: "Wilson", id: "40540" }, { name: "Sheridan", id: "40080" },
+    { name: "Addison", id: "41420" }, { name: "Belmont", id: "41320" }, { name: "Fullerton", id: "41220" },
+    { name: "North/Clybourn", id: "40650" }, { name: "Clark/Division", id: "40630" }, { name: "Chicago", id: "41450" },
+    { name: "Grand", id: "40330" }, { name: "Lake", id: "41660" }, { name: "Monroe", id: "41090" },
+    { name: "Jackson", id: "40560" }, { name: "Harrison", id: "41490" }, { name: "Cermak-Chinatown", id: "41000" },
+    { name: "Sox-35th", id: "40190" }, { name: "47th", id: "41230" }, { name: "Garfield", id: "41170" },
+    { name: "63rd", id: "40910" }, { name: "69th", id: "40990" }, { name: "79th", id: "40240" },
+    { name: "87th", id: "41430" }, { name: "95th/Dan Ryan", id: "40450" },
   ]},
   Blue: { color: "#00A1DE", textDark: false, directions: ["O'Hare", "Forest Park"], stops: [
-    { name: "O'Hare", id: "40890" },
-    { name: "Rosemont", id: "40820" },
-    { name: "Cumberland", id: "40230" },
-    { name: "Harlem (O'Hare)", id: "40750" },
-    { name: "Jefferson Park", id: "41280" },
-    { name: "Montrose", id: "41330" },
-    { name: "Irving Park", id: "40550" },
-    { name: "Addison", id: "41240" },
-    { name: "Belmont", id: "40060" },
-    { name: "Logan Square", id: "41020" },
-    { name: "California", id: "40570" },
-    { name: "Western", id: "40670" },
-    { name: "Damen", id: "40590" },
-    { name: "Division", id: "40320" },
-    { name: "Chicago", id: "41410" },
-    { name: "Grand", id: "40490" },
-    { name: "Clark/Lake", id: "40380" },
-    { name: "Washington", id: "40370" },
-    { name: "Monroe", id: "40790" },
-    { name: "Jackson", id: "40070" },
-    { name: "LaSalle", id: "41340" },
-    { name: "Clinton", id: "40430" },
-    { name: "UIC-Halsted", id: "40350" },
-    { name: "Racine", id: "40470" },
-    { name: "Illinois Medical District", id: "40810" },
-    { name: "Western (Forest Park)", id: "40220" },
-    { name: "Kedzie-Homan", id: "40250" },
-    { name: "Pulaski", id: "40920" },
-    { name: "Cicero", id: "40970" },
-    { name: "Austin", id: "40010" },
-    { name: "Oak Park", id: "40180" },
-    { name: "Harlem (Forest Park)", id: "40980" },
+    { name: "O'Hare", id: "40890" }, { name: "Rosemont", id: "40820" }, { name: "Cumberland", id: "40230" },
+    { name: "Harlem (O'Hare)", id: "40750" }, { name: "Jefferson Park", id: "41280" }, { name: "Montrose", id: "41330" },
+    { name: "Irving Park", id: "40550" }, { name: "Addison", id: "41240" }, { name: "Belmont", id: "40060" },
+    { name: "Logan Square", id: "41020" }, { name: "California", id: "40570" }, { name: "Western", id: "40670" },
+    { name: "Damen", id: "40590" }, { name: "Division", id: "40320" }, { name: "Chicago", id: "41410" },
+    { name: "Grand", id: "40490" }, { name: "Clark/Lake", id: "40380" }, { name: "Washington", id: "40370" },
+    { name: "Monroe", id: "40790" }, { name: "Jackson", id: "40070" }, { name: "LaSalle", id: "41340" },
+    { name: "Clinton", id: "40430" }, { name: "UIC-Halsted", id: "40350" }, { name: "Racine", id: "40470" },
+    { name: "Illinois Medical District", id: "40810" }, { name: "Western (Forest Park)", id: "40220" },
+    { name: "Kedzie-Homan", id: "40250" }, { name: "Pulaski", id: "40920" }, { name: "Cicero", id: "40970" },
+    { name: "Austin", id: "40010" }, { name: "Oak Park", id: "40180" }, { name: "Harlem (Forest Park)", id: "40980" },
     { name: "Forest Park", id: "40390" },
   ]},
   Brown: { color: "#62361B", textDark: false, directions: ["Kimball", "Loop"], stops: [
-    { name: "Kimball", id: "41290" },
-    { name: "Kedzie", id: "41180" },
-    { name: "Francisco", id: "40870" },
-    { name: "Rockwell", id: "41010" },
-    { name: "Western", id: "41480" },
-    { name: "Damen", id: "40090" },
-    { name: "Montrose", id: "41500" },
-    { name: "Irving Park", id: "41460" },
-    { name: "Addison", id: "41440" },
-    { name: "Paulina", id: "41310" },
-    { name: "Southport", id: "40360" },
-    { name: "Belmont", id: "41320" },
-    { name: "Fullerton", id: "41220" },
-    { name: "Diversey", id: "40530" },
-    { name: "Wellington", id: "41210" },
-    { name: "Armitage", id: "40660" },
-    { name: "Sedgwick", id: "40800" },
-    { name: "Chicago", id: "40710" },
-    { name: "Merchandise Mart", id: "40460" },
-    { name: "Clark/Lake", id: "40380" },
-    { name: "State/Lake", id: "40260" },
-    { name: "Washington/Wabash", id: "41700" },
-    { name: "Adams/Wabash", id: "40680" },
-    { name: "Harold Washington Library", id: "40850" },
-    { name: "LaSalle/Van Buren", id: "40160" },
-    { name: "Washington/Wells", id: "40730" },
-    { name: "Quincy/Wells", id: "40040" },
+    { name: "Kimball", id: "41290" }, { name: "Kedzie", id: "41180" }, { name: "Francisco", id: "40870" },
+    { name: "Rockwell", id: "41010" }, { name: "Western", id: "41480" }, { name: "Damen", id: "40090" },
+    { name: "Montrose", id: "41500" }, { name: "Irving Park", id: "41460" }, { name: "Addison", id: "41440" },
+    { name: "Paulina", id: "41310" }, { name: "Southport", id: "40360" }, { name: "Belmont", id: "41320" },
+    { name: "Fullerton", id: "41220" }, { name: "Diversey", id: "40530" }, { name: "Wellington", id: "41210" },
+    { name: "Armitage", id: "40660" }, { name: "Sedgwick", id: "40800" }, { name: "Chicago", id: "40710" },
+    { name: "Merchandise Mart", id: "40460" }, { name: "Clark/Lake", id: "40380" }, { name: "State/Lake", id: "40260" },
+    { name: "Washington/Wabash", id: "41700" }, { name: "Adams/Wabash", id: "40680" },
+    { name: "Harold Washington Library", id: "40850" }, { name: "LaSalle/Van Buren", id: "40160" },
+    { name: "Washington/Wells", id: "40730" }, { name: "Quincy/Wells", id: "40040" },
   ]},
   Green: { color: "#009B3A", textDark: false, directions: ["Harlem/Lake", "Cottage Grove"], stops: [
-    { name: "Harlem/Lake", id: "40020" },
-    { name: "Oak Park", id: "41350" },
-    { name: "Ridgeland", id: "40610" },
-    { name: "Austin", id: "41260" },
-    { name: "Central", id: "40280" },
-    { name: "Laramie", id: "40700" },
-    { name: "Cicero", id: "40480" },
-    { name: "Pulaski", id: "40030" },
-    { name: "Conservatory", id: "41670" },
-    { name: "Kedzie", id: "41070" },
-    { name: "California", id: "41360" },
-    { name: "Damen", id: "41710" },
-    { name: "Ashland", id: "40170" },
-    { name: "Morgan", id: "41510" },
-    { name: "Clinton", id: "41160" },
-    { name: "Clark/Lake", id: "40380" },
-    { name: "State/Lake", id: "40260" },
-    { name: "Washington/Wabash", id: "41700" },
-    { name: "Adams/Wabash", id: "40680" },
-    { name: "Roosevelt", id: "41400" },
-    { name: "Cermak-McCormick Place", id: "41690" },
-    { name: "35th-Bronzeville-IIT", id: "41120" },
-    { name: "Indiana", id: "40300" },
-    { name: "43rd", id: "41270" },
-    { name: "47th", id: "41080" },
-    { name: "51st", id: "40130" },
-    { name: "Garfield", id: "40510" },
-    { name: "King Drive", id: "41140" },
-    { name: "Halsted", id: "40940" },
-    { name: "Ashland/63rd", id: "40290" },
-    { name: "Cottage Grove", id: "40720" },
+    { name: "Harlem/Lake", id: "40020" }, { name: "Oak Park", id: "41350" }, { name: "Ridgeland", id: "40610" },
+    { name: "Austin", id: "41260" }, { name: "Central", id: "40280" }, { name: "Laramie", id: "40700" },
+    { name: "Cicero", id: "40480" }, { name: "Pulaski", id: "40030" }, { name: "Conservatory", id: "41670" },
+    { name: "Kedzie", id: "41070" }, { name: "California", id: "41360" }, { name: "Damen", id: "41710" },
+    { name: "Ashland", id: "40170" }, { name: "Morgan", id: "41510" }, { name: "Clinton", id: "41160" },
+    { name: "Clark/Lake", id: "40380" }, { name: "State/Lake", id: "40260" }, { name: "Washington/Wabash", id: "41700" },
+    { name: "Adams/Wabash", id: "40680" }, { name: "Roosevelt", id: "41400" },
+    { name: "Cermak-McCormick Place", id: "41690" }, { name: "35th-Bronzeville-IIT", id: "41120" },
+    { name: "Indiana", id: "40300" }, { name: "43rd", id: "41270" }, { name: "47th", id: "41080" },
+    { name: "51st", id: "40130" }, { name: "Garfield", id: "40510" }, { name: "King Drive", id: "41140" },
+    { name: "Halsted", id: "40940" }, { name: "Ashland/63rd", id: "40290" }, { name: "Cottage Grove", id: "40720" },
   ]},
   Orange: { color: "#F9461C", textDark: false, directions: ["Midway", "Loop"], stops: [
-    { name: "Midway", id: "40930" },
-    { name: "Pulaski", id: "40960" },
-    { name: "Kedzie", id: "41150" },
-    { name: "Western", id: "40310" },
-    { name: "35th/Archer", id: "40120" },
-    { name: "Ashland", id: "41060" },
-    { name: "Halsted", id: "41130" },
-    { name: "Roosevelt", id: "41400" },
-    { name: "Harold Washington Library", id: "40850" },
-    { name: "LaSalle/Van Buren", id: "40160" },
-    { name: "Washington/Wells", id: "40730" },
-    { name: "Quincy/Wells", id: "40040" },
-    { name: "Clark/Lake", id: "40380" },
-    { name: "State/Lake", id: "40260" },
-    { name: "Washington/Wabash", id: "41700" },
-    { name: "Adams/Wabash", id: "40680" },
+    { name: "Midway", id: "40930" }, { name: "Pulaski", id: "40960" }, { name: "Kedzie", id: "41150" },
+    { name: "Western", id: "40310" }, { name: "35th/Archer", id: "40120" }, { name: "Ashland", id: "41060" },
+    { name: "Halsted", id: "41130" }, { name: "Roosevelt", id: "41400" },
+    { name: "Harold Washington Library", id: "40850" }, { name: "LaSalle/Van Buren", id: "40160" },
+    { name: "Washington/Wells", id: "40730" }, { name: "Quincy/Wells", id: "40040" },
+    { name: "Clark/Lake", id: "40380" }, { name: "State/Lake", id: "40260" },
+    { name: "Washington/Wabash", id: "41700" }, { name: "Adams/Wabash", id: "40680" },
   ]},
   Pink: { color: "#E27EA6", textDark: false, directions: ["54th/Cermak", "Loop"], stops: [
-    { name: "54th/Cermak", id: "40580" },
-    { name: "Cicero", id: "40420" },
-    { name: "Kostner", id: "40600" },
-    { name: "Pulaski", id: "40150" },
-    { name: "Central Park", id: "40780" },
-    { name: "Kedzie", id: "41040" },
-    { name: "California", id: "40440" },
-    { name: "Western", id: "40740" },
-    { name: "Damen", id: "40210" },
-    { name: "18th", id: "40830" },
-    { name: "Polk", id: "41030" },
-    { name: "Ashland", id: "40170" },
-    { name: "Morgan", id: "41510" },
-    { name: "Clinton", id: "41160" },
-    { name: "Clark/Lake", id: "40380" },
-    { name: "State/Lake", id: "40260" },
-    { name: "Washington/Wabash", id: "41700" },
-    { name: "Adams/Wabash", id: "40680" },
-    { name: "Harold Washington Library", id: "40850" },
-    { name: "LaSalle/Van Buren", id: "40160" },
-    { name: "Washington/Wells", id: "40730" },
+    { name: "54th/Cermak", id: "40580" }, { name: "Cicero", id: "40420" }, { name: "Kostner", id: "40600" },
+    { name: "Pulaski", id: "40150" }, { name: "Central Park", id: "40780" }, { name: "Kedzie", id: "41040" },
+    { name: "California", id: "40440" }, { name: "Western", id: "40740" }, { name: "Damen", id: "40210" },
+    { name: "18th", id: "40830" }, { name: "Polk", id: "41030" }, { name: "Ashland", id: "40170" },
+    { name: "Morgan", id: "41510" }, { name: "Clinton", id: "41160" }, { name: "Clark/Lake", id: "40380" },
+    { name: "State/Lake", id: "40260" }, { name: "Washington/Wabash", id: "41700" },
+    { name: "Adams/Wabash", id: "40680" }, { name: "Harold Washington Library", id: "40850" },
+    { name: "LaSalle/Van Buren", id: "40160" }, { name: "Washington/Wells", id: "40730" },
     { name: "Quincy/Wells", id: "40040" },
   ]},
   Purple: { color: "#522398", textDark: false, directions: ["Linden", "Loop"], stops: [
-    { name: "Linden", id: "41050" },
-    { name: "Central", id: "41250" },
-    { name: "Noyes", id: "40400" },
-    { name: "Foster", id: "40520" },
-    { name: "Davis", id: "40050" },
-    { name: "Dempster", id: "40690" },
-    { name: "Main", id: "40270" },
-    { name: "South Boulevard", id: "40840" },
-    { name: "Howard", id: "40900" },
-    { name: "Wilson", id: "40540" },
-    { name: "Belmont", id: "41320" },
-    { name: "Fullerton", id: "41220" },
-    { name: "Armitage", id: "40660" },
-    { name: "Sedgwick", id: "40800" },
-    { name: "Chicago", id: "40710" },
-    { name: "Merchandise Mart", id: "40460" },
-    { name: "Clark/Lake", id: "40380" },
-    { name: "State/Lake", id: "40260" },
-    { name: "Washington/Wabash", id: "41700" },
-    { name: "Adams/Wabash", id: "40680" },
-    { name: "Harold Washington Library", id: "40850" },
-    { name: "LaSalle/Van Buren", id: "40160" },
-    { name: "Washington/Wells", id: "40730" },
+    { name: "Linden", id: "41050" }, { name: "Central", id: "41250" }, { name: "Noyes", id: "40400" },
+    { name: "Foster", id: "40520" }, { name: "Davis", id: "40050" }, { name: "Dempster", id: "40690" },
+    { name: "Main", id: "40270" }, { name: "South Boulevard", id: "40840" }, { name: "Howard", id: "40900" },
+    { name: "Wilson", id: "40540" }, { name: "Belmont", id: "41320" }, { name: "Fullerton", id: "41220" },
+    { name: "Armitage", id: "40660" }, { name: "Sedgwick", id: "40800" }, { name: "Chicago", id: "40710" },
+    { name: "Merchandise Mart", id: "40460" }, { name: "Clark/Lake", id: "40380" },
+    { name: "State/Lake", id: "40260" }, { name: "Washington/Wabash", id: "41700" },
+    { name: "Adams/Wabash", id: "40680" }, { name: "Harold Washington Library", id: "40850" },
+    { name: "LaSalle/Van Buren", id: "40160" }, { name: "Washington/Wells", id: "40730" },
     { name: "Quincy/Wells", id: "40040" },
   ]},
   Yellow: { color: "#F9E300", textDark: true, directions: ["Dempster-Skokie", "Howard"], stops: [
-    { name: "Howard", id: "40900" },
-    { name: "Oakton-Skokie", id: "41680" },
-    { name: "Dempster-Skokie", id: "40140" },
+    { name: "Howard", id: "40900" }, { name: "Oakton-Skokie", id: "41680" }, { name: "Dempster-Skokie", id: "40140" },
   ]},
 };
 
@@ -247,11 +129,11 @@ async function fetchLiveArrivals(stopId, line) {
 
 function TopBar({ view, line, stop, onBack }) {
   const ld = CTA_LINES[line];
-  const titles = { lines: "Transit Lines", stops: `${line} Line`, arrivals: stop || "" };
+  const titles = { lines: "Transit Lines", stops: `${line} Line`, arrivals: stop || "", favorites: "Favorites" };
   return (
     <div style={{ background: COLORS.navy, paddingTop: "env(safe-area-inset-top, 16px)" }}>
       <div style={{ padding: "16px 20px 20px", display: "flex", alignItems: "center", gap: 12 }}>
-        {view !== "lines" ? (
+        {view !== "lines" && view !== "favorites" ? (
           <button onClick={onBack} style={{ width:36,height:36,borderRadius:18,background:"rgba(255,255,255,0.15)",border:"none",cursor:"pointer",color:"#fff",fontSize:20,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>‹</button>
         ) : (
           <div style={{ width:36,height:36,borderRadius:10,background:"rgba(255,255,255,0.15)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>
@@ -287,19 +169,47 @@ function LineCard({ name, data, onSelect }) {
   );
 }
 
-function StopRow({ name, lineColor, index, total, onSelect }) {
+function StopRow({ name, lineColor, index, total, onSelect, isFav, onToggleFav }) {
   return (
-    <button onClick={onSelect} style={{ width:"100%",background:"transparent",border:"none",padding:"0 20px",cursor:"pointer",display:"flex",alignItems:"stretch",gap:14,borderBottom:index<total-1?`1px solid ${COLORS.gray100}`:"none",textAlign:"left" }}>
-      <div style={{ display:"flex",flexDirection:"column",alignItems:"center",width:16,flexShrink:0 }}>
-        <div style={{ width:2,flex:1,background:lineColor,opacity:index===0?0:0.25,minHeight:12 }}/>
-        <div style={{ width:10,height:10,borderRadius:"50%",border:`2.5px solid ${lineColor}`,background:COLORS.white,flexShrink:0,margin:"2px 0" }}/>
-        <div style={{ width:2,flex:1,background:lineColor,opacity:index===total-1?0:0.25,minHeight:12 }}/>
+    <div style={{ display:"flex",alignItems:"stretch",borderBottom:index<total-1?`1px solid ${COLORS.gray100}`:"none" }}>
+      <button onClick={onSelect} style={{ flex:1,background:"transparent",border:"none",padding:"0 0 0 20px",cursor:"pointer",display:"flex",alignItems:"stretch",gap:14,textAlign:"left" }}>
+        <div style={{ display:"flex",flexDirection:"column",alignItems:"center",width:16,flexShrink:0 }}>
+          <div style={{ width:2,flex:1,background:lineColor,opacity:index===0?0:0.25,minHeight:12 }}/>
+          <div style={{ width:10,height:10,borderRadius:"50%",border:`2.5px solid ${lineColor}`,background:COLORS.white,flexShrink:0,margin:"2px 0" }}/>
+          <div style={{ width:2,flex:1,background:lineColor,opacity:index===total-1?0:0.25,minHeight:12 }}/>
+        </div>
+        <div style={{ flex:1,padding:"13px 0",display:"flex",alignItems:"center" }}>
+          <span style={{ fontSize:15,fontWeight:500,color:COLORS.gray900,fontFamily:"'DM Sans',sans-serif" }}>{name}</span>
+        </div>
+      </button>
+      <button onClick={onToggleFav} style={{ padding:"0 16px",background:"transparent",border:"none",cursor:"pointer",fontSize:18,display:"flex",alignItems:"center" }}>
+        {isFav ? "⭐" : "☆"}
+      </button>
+    </div>
+  );
+}
+
+function FavoriteCard({ fav, onSelect, onRemove }) {
+  const ld = CTA_LINES[fav.line];
+  return (
+    <div style={{ background:COLORS.white,borderRadius:16,border:`1.5px solid ${COLORS.gray200}`,overflow:"hidden",boxShadow:"0 1px 4px rgba(0,0,0,0.06)" }}>
+      <div style={{ background:ld.color,padding:"10px 14px",display:"flex",alignItems:"center",justifyContent:"space-between" }}>
+        <div style={{ display:"flex",alignItems:"center",gap:8 }}>
+          <div style={{ width:20,height:20,borderRadius:"50%",background:"rgba(255,255,255,0.25)",display:"flex",alignItems:"center",justifyContent:"center" }}>
+            <span style={{ fontSize:10,fontWeight:900,color:ld.textDark?"#1A2330":"white",fontFamily:"'DM Sans',sans-serif" }}>{fav.line[0]}</span>
+          </div>
+          <span style={{ fontSize:11,fontWeight:700,color:ld.textDark?"rgba(0,0,0,0.6)":"rgba(255,255,255,0.85)",letterSpacing:"0.06em",fontFamily:"'DM Sans',sans-serif" }}>{fav.line.toUpperCase()} LINE</span>
+        </div>
+        <button onClick={onRemove} style={{ background:"rgba(255,255,255,0.2)",border:"none",borderRadius:8,width:24,height:24,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,color:ld.textDark?"#1A2330":"white",fontWeight:700 }}>✕</button>
       </div>
-      <div style={{ flex:1,padding:"13px 0",display:"flex",alignItems:"center",justifyContent:"space-between" }}>
-        <span style={{ fontSize:15,fontWeight:500,color:COLORS.gray900,fontFamily:"'DM Sans',sans-serif" }}>{name}</span>
-        <span style={{ color:COLORS.gray400,fontSize:20,fontWeight:200 }}>›</span>
-      </div>
-    </button>
+      <button onClick={onSelect} style={{ width:"100%",background:"transparent",border:"none",padding:"14px 16px",cursor:"pointer",textAlign:"left",display:"flex",alignItems:"center",justifyContent:"space-between" }}>
+        <div>
+          <div style={{ fontSize:17,fontWeight:700,color:COLORS.gray900,fontFamily:"'DM Sans',sans-serif" }}>{fav.stopName}</div>
+          <div style={{ fontSize:12,color:COLORS.gray400,marginTop:2,fontFamily:"'DM Sans',sans-serif" }}>Tap to see arrivals</div>
+        </div>
+        <div style={{ fontSize:22,color:COLORS.gray400,fontWeight:200 }}>›</div>
+      </button>
+    </div>
   );
 }
 
@@ -352,6 +262,14 @@ export default function CTATracker() {
   const [loading, setLoading] = useState(false);
   const [lastRefresh, setLastRefresh] = useState(null);
   const [serviceStatus, setServiceStatus] = useState("live");
+  const [favorites, setFavorites] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("cta-favorites") || "[]"); }
+    catch { return []; }
+  });
+
+  useEffect(() => {
+    localStorage.setItem("cta-favorites", JSON.stringify(favorites));
+  }, [favorites]);
 
   const timeStr = new Date().toLocaleTimeString([], { hour:"2-digit", minute:"2-digit" });
 
@@ -365,17 +283,34 @@ export default function CTATracker() {
   }, []);
 
   const selectLine = l => { setSelectedLine(l); setView("stops"); };
-  const selectStop = stopObj => { setSelectedStop(stopObj); setView("arrivals"); load(stopObj, selectedLine); };
+  const selectStop = (stopObj, line) => {
+    const l = line || selectedLine;
+    setSelectedLine(l);
+    setSelectedStop(stopObj);
+    setView("arrivals");
+    load(stopObj, l);
+  };
   const goBack = () => {
     if (view==="arrivals") { setView("stops"); setArrivals([]); }
-    else { setView("lines"); setSelectedLine(null); }
+    else if (view==="stops") { setView("lines"); setSelectedLine(null); }
   };
+
+  const favKey = (line, stopId) => `${line}:${stopId}`;
+  const isFav = (line, stopId) => favorites.some(f => f.key === favKey(line, stopId));
+  const toggleFav = (line, stopObj) => {
+    const key = favKey(line, stopObj.id);
+    if (isFav(line, stopObj.id)) {
+      setFavorites(prev => prev.filter(f => f.key !== key));
+    } else {
+      setFavorites(prev => [...prev, { key, line, stopId: stopObj.id, stopName: stopObj.name }]);
+    }
+  };
+  const removeFav = key => setFavorites(prev => prev.filter(f => f.key !== key));
 
   const ld = selectedLine ? CTA_LINES[selectedLine] : null;
   const [dir1, dir2] = ld?.directions || ["",""];
   const col1 = arrivals.filter(a => a.destNm.toLowerCase().includes(dir1.split("/")[0].toLowerCase()) || a.destNm.toLowerCase().includes(dir1.split(" ")[0].toLowerCase()));
   const col2 = arrivals.filter(a => !col1.includes(a));
-
   const statusDisplay = { live:"🟢 Live", no_service:"🌙 No service", error:"⚠️ Error" }[serviceStatus] || "...";
 
   return (
@@ -395,6 +330,7 @@ export default function CTATracker() {
 
         <div style={{ flex:1,overflowY:"auto",padding:"14px 16px 40px",zIndex:2,position:"relative" }}>
 
+          {/* LINES */}
           {view==="lines" && (
             <div>
               <div style={{ background:COLORS.white,borderRadius:14,padding:"11px 16px",marginBottom:16,display:"flex",alignItems:"center",gap:8,boxShadow:"0 1px 4px rgba(0,0,0,0.06)",border:`1px solid ${COLORS.gray200}` }}>
@@ -412,6 +348,40 @@ export default function CTATracker() {
             </div>
           )}
 
+          {/* FAVORITES */}
+          {view==="favorites" && (
+            <div>
+              {favorites.length === 0 ? (
+                <div style={{ textAlign:"center",padding:"60px 20px" }}>
+                  <div style={{ fontSize:48,marginBottom:16 }}>⭐</div>
+                  <div style={{ fontSize:18,fontWeight:700,color:COLORS.gray900,marginBottom:8,fontFamily:"'DM Sans',sans-serif" }}>No favorites yet</div>
+                  <div style={{ fontSize:14,color:COLORS.gray400,lineHeight:1.6,fontFamily:"'DM Sans',sans-serif" }}>
+                    Go to any line, tap a station, and press the ☆ star to save it here for quick access.
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <div style={{ fontSize:11,fontWeight:700,color:COLORS.gray400,letterSpacing:"0.09em",textTransform:"uppercase",marginBottom:10,paddingLeft:2 }}>Your saved stations</div>
+                  <div style={{ display:"flex",flexDirection:"column",gap:10 }}>
+                    {favorites.map((fav,i) => (
+                      <div key={fav.key} className="enter" style={{ animationDelay:`${i*40}ms`,animationFillMode:"both" }}>
+                        <FavoriteCard
+                          fav={fav}
+                          onSelect={() => {
+                            const stopObj = { id: fav.stopId, name: fav.stopName };
+                            selectStop(stopObj, fav.line);
+                          }}
+                          onRemove={() => removeFav(fav.key)}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* STOPS */}
           {view==="stops" && ld && (
             <div>
               <div style={{ background:ld.color,borderRadius:16,padding:"14px 18px",marginBottom:16,boxShadow:`0 4px 16px ${ld.color}50`,display:"flex",alignItems:"center",gap:14 }}>
@@ -421,15 +391,25 @@ export default function CTATracker() {
                 </div>
                 <div style={{ fontSize:13,color:ld.textDark?"rgba(0,0,0,0.4)":"rgba(255,255,255,0.6)",fontWeight:600 }}>{ld.stops.length} stations</div>
               </div>
-              <div style={{ fontSize:11,fontWeight:700,color:COLORS.gray400,letterSpacing:"0.09em",textTransform:"uppercase",marginBottom:10,paddingLeft:2 }}>Select a station</div>
+              <div style={{ fontSize:11,fontWeight:700,color:COLORS.gray400,letterSpacing:"0.09em",textTransform:"uppercase",marginBottom:10,paddingLeft:2 }}>Select a station · ☆ to favorite</div>
               <div style={{ background:COLORS.white,borderRadius:16,overflow:"hidden",boxShadow:"0 1px 5px rgba(0,0,0,0.07)",border:`1px solid ${COLORS.gray200}` }}>
                 {ld.stops.map((stop,i)=>(
-                  <StopRow key={stop.id} name={stop.name} lineColor={ld.color} index={i} total={ld.stops.length} onSelect={()=>selectStop(stop)}/>
+                  <StopRow
+                    key={stop.id}
+                    name={stop.name}
+                    lineColor={ld.color}
+                    index={i}
+                    total={ld.stops.length}
+                    onSelect={()=>selectStop(stop)}
+                    isFav={isFav(selectedLine, stop.id)}
+                    onToggleFav={()=>toggleFav(selectedLine, stop)}
+                  />
                 ))}
               </div>
             </div>
           )}
 
+          {/* ARRIVALS */}
           {view==="arrivals" && ld && (
             <div>
               <div style={{ background:COLORS.white,borderRadius:16,padding:"16px 18px",marginBottom:16,boxShadow:"0 1px 6px rgba(0,0,0,0.08)",border:`1px solid ${COLORS.gray200}`,display:"flex",alignItems:"center",gap:14 }}>
@@ -445,6 +425,9 @@ export default function CTATracker() {
                     {selectedLine} Line · {statusDisplay}{lastRefresh?` · ${lastRefresh.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}` : ""}
                   </div>
                 </div>
+                <button onClick={()=>toggleFav(selectedLine, selectedStop)} style={{ background:"none",border:"none",cursor:"pointer",fontSize:24,padding:"0 4px" }}>
+                  {isFav(selectedLine, selectedStop?.id) ? "⭐" : "☆"}
+                </button>
               </div>
 
               {serviceStatus === "no_service" && (
@@ -482,12 +465,17 @@ export default function CTATracker() {
           )}
         </div>
 
+        {/* Bottom tab bar */}
         <div style={{ background:COLORS.white,borderTop:`1px solid ${COLORS.gray200}`,display:"flex",paddingBottom:"env(safe-area-inset-bottom,8px)" }}>
-          {[{icon:"🚇",label:"Lines",v:"lines"},{icon:"⭐",label:"Favorites",v:"fav"},{icon:"⚙️",label:"Settings",v:"set"}].map(t=>(
-            <button key={t.v} onClick={()=>t.v==="lines"&&setView("lines")} style={{ flex:1,padding:"10px 0",background:"none",border:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:3 }}>
+          {[
+            { icon:"🚇", label:"Lines", v:"lines" },
+            { icon:"⭐", label:"Favorites", v:"favorites" },
+            { icon:"⚙️", label:"Settings", v:"settings" },
+          ].map(t=>(
+            <button key={t.v} onClick={()=>{ if(t.v==="lines"||t.v==="favorites") { setView(t.v); if(t.v==="lines"){ setSelectedLine(null); setSelectedStop(null); } } }} style={{ flex:1,padding:"10px 0",background:"none",border:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:3 }}>
               <span style={{ fontSize:22 }}>{t.icon}</span>
-              <span style={{ fontSize:10,fontWeight:700,letterSpacing:"0.03em",fontFamily:"'DM Sans',sans-serif",color:t.v==="lines"&&view!=="fav"&&view!=="set"?COLORS.navy:COLORS.gray400 }}>{t.label}</span>
-              {t.v==="lines"&&view!=="fav"&&view!=="set"&&<div style={{ width:4,height:4,borderRadius:"50%",background:COLORS.navy }}/>}
+              <span style={{ fontSize:10,fontWeight:700,letterSpacing:"0.03em",fontFamily:"'DM Sans',sans-serif",color:(view===t.v||(t.v==="lines"&&(view==="stops"||view==="arrivals")))?COLORS.navy:COLORS.gray400 }}>{t.label}</span>
+              {(view===t.v||(t.v==="lines"&&(view==="stops"||view==="arrivals")))&&<div style={{ width:4,height:4,borderRadius:"50%",background:COLORS.navy }}/>}
             </button>
           ))}
         </div>
