@@ -118,7 +118,7 @@ async function fetchLiveArrivals(stopId, line) {
     const etas = data?.ctatt?.eta;
     if (!etas || etas.length === 0) return { status: "no_service", arrivals: [] };
     const arrivals = etas.map(e => {
-      const mins = Math.max(0, Math.round((new Date(e.arrT.replace("T", " ") + " GMT-0500") - new Date()) / 60000));
+      const mins = Math.max(0, Math.round((new Date(e.arrT.replace("T", " ").replace(/-/g, "/") + " GMT-0500") - new Date()) / 60000));
       return { destNm: e.destNm, _mins: mins, isDly: e.isDly === "1" };
     });
     return { status: "live", arrivals };
