@@ -122,18 +122,16 @@ async function fetchLiveArrivals(stopId, line) {
       return { destNm: e.destNm, _mins: mins, isDly: e.isDly === "1" };
     });
     return { status: "live", arrivals };
-  } catch (err) {
-    return { status: "error", arrivals: [] };
-  }
+  } catch { return { status: "error", arrivals: [] }; }
 }
 
 function TopBar({ view, line, stop, onBack }) {
   const ld = CTA_LINES[line];
-  const titles = { lines: "Transit Lines", stops: `${line} Line`, arrivals: stop || "", favorites: "Favorites" };
+  const titles = { lines: "Transit Lines", stops: `${line} Line`, arrivals: stop || "" };
   return (
     <div style={{ background: COLORS.navy, paddingTop: "env(safe-area-inset-top, 16px)" }}>
       <div style={{ padding: "16px 20px 20px", display: "flex", alignItems: "center", gap: 12 }}>
-        {view !== "lines" && view !== "favorites" ? (
+        {view !== "lines" ? (
           <button onClick={onBack} style={{ width:36,height:36,borderRadius:18,background:"rgba(255,255,255,0.15)",border:"none",cursor:"pointer",color:"#fff",fontSize:20,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>‹</button>
         ) : (
           <div style={{ width:36,height:36,borderRadius:10,background:"rgba(255,255,255,0.15)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>
@@ -150,6 +148,29 @@ function TopBar({ view, line, stop, onBack }) {
         </div>
         {view === "arrivals" && ld && <div style={{ width:14,height:14,borderRadius:"50%",background:ld.color,border:"2px solid rgba(255,255,255,0.4)",flexShrink:0 }}/>}
       </div>
+    </div>
+  );
+}
+
+function FavoriteCard({ fav, onSelect, onRemove }) {
+  const ld = CTA_LINES[fav.line];
+  return (
+    <div style={{ background:COLORS.white,borderRadius:16,border:`1.5px solid ${COLORS.gray200}`,overflow:"hidden",boxShadow:"0 1px 4px rgba(0,0,0,0.06)",display:"flex",alignItems:"stretch" }}>
+      {/* Color strip */}
+      <div style={{ width:5,background:ld.color,flexShrink:0 }}/>
+      <button onClick={onSelect} style={{ flex:1,background:"transparent",border:"none",padding:"14px 12px",cursor:"pointer",textAlign:"left",display:"flex",alignItems:"center",gap:12 }}>
+        <div style={{ width:36,height:36,borderRadius:10,background:ld.color,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>
+          <span style={{ fontSize:12,fontWeight:900,color:ld.textDark?"#1A2330":"white",fontFamily:"'DM Sans',sans-serif" }}>{fav.line[0]}</span>
+        </div>
+        <div style={{ flex:1 }}>
+          <div style={{ fontSize:16,fontWeight:700,color:COLORS.gray900,fontFamily:"'DM Sans',sans-serif" }}>{fav.stopName}</div>
+          <div style={{ fontSize:11,color:COLORS.gray400,marginTop:1,fontFamily:"'DM Sans',sans-serif" }}>{fav.line} Line · Tap for arrivals</div>
+        </div>
+        <div style={{ fontSize:20,color:COLORS.gray400,fontWeight:200 }}>›</div>
+      </button>
+      <button onClick={onRemove} style={{ padding:"0 14px",background:"transparent",border:"none",borderLeft:`1px solid ${COLORS.gray100}`,cursor:"pointer",color:COLORS.gray400,fontSize:18,display:"flex",alignItems:"center" }}>
+        ⭐
+      </button>
     </div>
   );
 }
@@ -182,32 +203,8 @@ function StopRow({ name, lineColor, index, total, onSelect, isFav, onToggleFav }
           <span style={{ fontSize:15,fontWeight:500,color:COLORS.gray900,fontFamily:"'DM Sans',sans-serif" }}>{name}</span>
         </div>
       </button>
-      <button onClick={onToggleFav} style={{ padding:"0 16px",background:"transparent",border:"none",cursor:"pointer",fontSize:20,color:"#F59E0B",display:"flex",alignItems:"center" }}>
+      <button onClick={onToggleFav} style={{ padding:"0 18px",background:"transparent",border:"none",borderLeft:`1px solid ${COLORS.gray100}`,cursor:"pointer",fontSize:20,display:"flex",alignItems:"center",color:isFav?"#F59E0B":"#D1D5DB" }}>
         {isFav ? "⭐" : "☆"}
-      </button>
-    </div>
-  );
-}
-
-function FavoriteCard({ fav, onSelect, onRemove }) {
-  const ld = CTA_LINES[fav.line];
-  return (
-    <div style={{ background:COLORS.white,borderRadius:16,border:`1.5px solid ${COLORS.gray200}`,overflow:"hidden",boxShadow:"0 1px 4px rgba(0,0,0,0.06)" }}>
-      <div style={{ background:ld.color,padding:"10px 14px",display:"flex",alignItems:"center",justifyContent:"space-between" }}>
-        <div style={{ display:"flex",alignItems:"center",gap:8 }}>
-          <div style={{ width:20,height:20,borderRadius:"50%",background:"rgba(255,255,255,0.25)",display:"flex",alignItems:"center",justifyContent:"center" }}>
-            <span style={{ fontSize:10,fontWeight:900,color:ld.textDark?"#1A2330":"white",fontFamily:"'DM Sans',sans-serif" }}>{fav.line[0]}</span>
-          </div>
-          <span style={{ fontSize:11,fontWeight:700,color:ld.textDark?"rgba(0,0,0,0.6)":"rgba(255,255,255,0.85)",letterSpacing:"0.06em",fontFamily:"'DM Sans',sans-serif" }}>{fav.line.toUpperCase()} LINE</span>
-        </div>
-        <button onClick={onRemove} style={{ background:"rgba(255,255,255,0.2)",border:"none",borderRadius:8,width:24,height:24,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,color:ld.textDark?"#1A2330":"white",fontWeight:700 }}>✕</button>
-      </div>
-      <button onClick={onSelect} style={{ width:"100%",background:"transparent",border:"none",padding:"14px 16px",cursor:"pointer",textAlign:"left",display:"flex",alignItems:"center",justifyContent:"space-between" }}>
-        <div>
-          <div style={{ fontSize:17,fontWeight:700,color:COLORS.gray900,fontFamily:"'DM Sans',sans-serif" }}>{fav.stopName}</div>
-          <div style={{ fontSize:12,color:COLORS.gray400,marginTop:2,fontFamily:"'DM Sans',sans-serif" }}>Tap to see arrivals</div>
-        </div>
-        <div style={{ fontSize:22,color:COLORS.gray400,fontWeight:200 }}>›</div>
       </button>
     </div>
   );
@@ -292,7 +289,7 @@ export default function CTATracker() {
   };
   const goBack = () => {
     if (view==="arrivals") { setView("stops"); setArrivals([]); }
-    else if (view==="stops") { setView("lines"); setSelectedLine(null); }
+    else { setView("lines"); setSelectedLine(null); }
   };
 
   const favKey = (line, stopId) => `${line}:${stopId}`;
@@ -305,7 +302,6 @@ export default function CTATracker() {
       setFavorites(prev => [...prev, { key, line, stopId: stopObj.id, stopName: stopObj.name }]);
     }
   };
-  const removeFav = key => setFavorites(prev => prev.filter(f => f.key !== key));
 
   const ld = selectedLine ? CTA_LINES[selectedLine] : null;
   const [dir1, dir2] = ld?.directions || ["",""];
@@ -330,14 +326,37 @@ export default function CTATracker() {
 
         <div style={{ flex:1,overflowY:"auto",padding:"14px 16px 40px",zIndex:2,position:"relative" }}>
 
-          {/* LINES */}
+          {/* HOME / LINES */}
           {view==="lines" && (
             <div>
+              {/* Status bar */}
               <div style={{ background:COLORS.white,borderRadius:14,padding:"11px 16px",marginBottom:16,display:"flex",alignItems:"center",gap:8,boxShadow:"0 1px 4px rgba(0,0,0,0.06)",border:`1px solid ${COLORS.gray200}` }}>
                 <div style={{ width:8,height:8,borderRadius:"50%",background:COLORS.success }}/>
                 <span style={{ fontSize:13,color:COLORS.gray600,fontWeight:500 }}>Live Data Ready · {timeStr}</span>
               </div>
-              <div style={{ fontSize:11,fontWeight:700,color:COLORS.gray400,letterSpacing:"0.09em",textTransform:"uppercase",marginBottom:10,paddingLeft:2 }}>Select a line</div>
+
+              {/* Favorites section */}
+              {favorites.length > 0 && (
+                <div style={{ marginBottom:20 }}>
+                  <div style={{ fontSize:11,fontWeight:700,color:COLORS.gray400,letterSpacing:"0.09em",textTransform:"uppercase",marginBottom:10,paddingLeft:2 }}>
+                    ⭐ Favorite Stations
+                  </div>
+                  <div style={{ display:"flex",flexDirection:"column",gap:8 }}>
+                    {favorites.map((fav,i) => (
+                      <div key={fav.key} className="enter" style={{ animationDelay:`${i*40}ms`,animationFillMode:"both" }}>
+                        <FavoriteCard
+                          fav={fav}
+                          onSelect={() => selectStop({ id: fav.stopId, name: fav.stopName }, fav.line)}
+                          onRemove={() => setFavorites(prev => prev.filter(f => f.key !== fav.key))}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Lines section */}
+              <div style={{ fontSize:11,fontWeight:700,color:COLORS.gray400,letterSpacing:"0.09em",textTransform:"uppercase",marginBottom:10,paddingLeft:2 }}>All Lines</div>
               <div style={{ display:"flex",flexDirection:"column",gap:10 }}>
                 {Object.entries(CTA_LINES).map(([name,data],i)=>(
                   <div key={name} className="enter" style={{ animationDelay:`${i*35}ms`,animationFillMode:"both" }}>
@@ -345,39 +364,6 @@ export default function CTATracker() {
                   </div>
                 ))}
               </div>
-            </div>
-          )}
-
-          {/* FAVORITES */}
-          {view==="favorites" && (
-            <div>
-              {favorites.length === 0 ? (
-                <div style={{ textAlign:"center",padding:"60px 20px" }}>
-                  <div style={{ fontSize:48,marginBottom:16 }}>⭐</div>
-                  <div style={{ fontSize:18,fontWeight:700,color:COLORS.gray900,marginBottom:8,fontFamily:"'DM Sans',sans-serif" }}>No favorites yet</div>
-                  <div style={{ fontSize:14,color:COLORS.gray400,lineHeight:1.6,fontFamily:"'DM Sans',sans-serif" }}>
-                    Go to any line, tap a station, and press the ☆ star to save it here for quick access.
-                  </div>
-                </div>
-              ) : (
-                <div>
-                  <div style={{ fontSize:11,fontWeight:700,color:COLORS.gray400,letterSpacing:"0.09em",textTransform:"uppercase",marginBottom:10,paddingLeft:2 }}>Your saved stations</div>
-                  <div style={{ display:"flex",flexDirection:"column",gap:10 }}>
-                    {favorites.map((fav,i) => (
-                      <div key={fav.key} className="enter" style={{ animationDelay:`${i*40}ms`,animationFillMode:"both" }}>
-                        <FavoriteCard
-                          fav={fav}
-                          onSelect={() => {
-                            const stopObj = { id: fav.stopId, name: fav.stopName };
-                            selectStop(stopObj, fav.line);
-                          }}
-                          onRemove={() => removeFav(fav.key)}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
           )}
 
@@ -391,7 +377,7 @@ export default function CTATracker() {
                 </div>
                 <div style={{ fontSize:13,color:ld.textDark?"rgba(0,0,0,0.4)":"rgba(255,255,255,0.6)",fontWeight:600 }}>{ld.stops.length} stations</div>
               </div>
-              <div style={{ fontSize:11,fontWeight:700,color:COLORS.gray400,letterSpacing:"0.09em",textTransform:"uppercase",marginBottom:10,paddingLeft:2 }}>Select a station · ☆ to favorite</div>
+              <div style={{ fontSize:11,fontWeight:700,color:COLORS.gray400,letterSpacing:"0.09em",textTransform:"uppercase",marginBottom:10,paddingLeft:2 }}>Select a station</div>
               <div style={{ background:COLORS.white,borderRadius:16,overflow:"hidden",boxShadow:"0 1px 5px rgba(0,0,0,0.07)",border:`1px solid ${COLORS.gray200}` }}>
                 {ld.stops.map((stop,i)=>(
                   <StopRow
@@ -425,7 +411,7 @@ export default function CTATracker() {
                     {selectedLine} Line · {statusDisplay}{lastRefresh?` · ${lastRefresh.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}` : ""}
                   </div>
                 </div>
-                <button onClick={()=>toggleFav(selectedLine, selectedStop)} style={{ background:"none",border:"none",cursor:"pointer",fontSize:24,padding:"0 4px" }}>
+                <button onClick={()=>toggleFav(selectedLine, selectedStop)} style={{ background:"none",border:"none",cursor:"pointer",fontSize:26,padding:"0 4px",lineHeight:1,color:isFav(selectedLine,selectedStop?.id)?"#F59E0B":"#D1D5DB" }}>
                   {isFav(selectedLine, selectedStop?.id) ? "⭐" : "☆"}
                 </button>
               </div>
@@ -465,17 +451,13 @@ export default function CTATracker() {
           )}
         </div>
 
-        {/* Bottom tab bar */}
+        {/* Bottom tab bar - simplified to just Lines */}
         <div style={{ background:COLORS.white,borderTop:`1px solid ${COLORS.gray200}`,display:"flex",paddingBottom:"env(safe-area-inset-bottom,8px)" }}>
-          {[
-            { icon:"🚇", label:"Lines", v:"lines" },
-            { icon:"⭐", label:"Favorites", v:"favorites" },
-            { icon:"⚙️", label:"Settings", v:"settings" },
-          ].map(t=>(
-            <button key={t.v} onClick={()=>{ if(t.v==="lines"||t.v==="favorites") { setView(t.v); if(t.v==="lines"){ setSelectedLine(null); setSelectedStop(null); } } }} style={{ flex:1,padding:"10px 0",background:"none",border:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:3 }}>
+          {[{icon:"🚇",label:"Lines",v:"lines"},{icon:"⚙️",label:"Settings",v:"settings"}].map(t=>(
+            <button key={t.v} onClick={()=>{ if(t.v==="lines"){ setView("lines"); setSelectedLine(null); setSelectedStop(null); }}} style={{ flex:1,padding:"10px 0",background:"none",border:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:3 }}>
               <span style={{ fontSize:22 }}>{t.icon}</span>
-              <span style={{ fontSize:10,fontWeight:700,letterSpacing:"0.03em",fontFamily:"'DM Sans',sans-serif",color:(view===t.v||(t.v==="lines"&&(view==="stops"||view==="arrivals")))?COLORS.navy:COLORS.gray400 }}>{t.label}</span>
-              {(view===t.v||(t.v==="lines"&&(view==="stops"||view==="arrivals")))&&<div style={{ width:4,height:4,borderRadius:"50%",background:COLORS.navy }}/>}
+              <span style={{ fontSize:10,fontWeight:700,letterSpacing:"0.03em",fontFamily:"'DM Sans',sans-serif",color:(t.v==="lines")?COLORS.navy:COLORS.gray400 }}>{t.label}</span>
+              {t.v==="lines"&&<div style={{ width:4,height:4,borderRadius:"50%",background:COLORS.navy }}/>}
             </button>
           ))}
         </div>
