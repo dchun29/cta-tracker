@@ -17,6 +17,29 @@ const COLORS = {
   warningBg: "#FEF3C7",
 };
 
+const COMMUTES = {
+  toWork: {
+    label: "To Work",
+    icon: "🏢",
+    stopId: "40320",
+    stopName: "Division",
+    line: "Blue",
+    destKeyword: "forest",   // matches "Forest Park"
+    walkMins: 9,
+    bufferMins: 3,
+  },
+  toHome: {
+    label: "To Home",
+    icon: "🏠",
+    stopId: "40790",
+    stopName: "Monroe",
+    line: "Blue",
+    destKeyword: "o'hare",   // matches "O'Hare"
+    walkMins: 6,
+    bufferMins: 3,
+  },
+};
+
 const CTA_LINES = {
   Red: { color: "#C8102E", textDark: false, directions: ["Howard", "95th/Dan Ryan"], stops: [
     { name: "Howard", id: "40900" }, { name: "Jarvis", id: "41190" }, { name: "Morse", id: "40100" },
@@ -125,6 +148,134 @@ async function fetchLiveArrivals(stopId, line) {
   } catch { return { status: "error", arrivals: [] }; }
 }
 
+function getStoplightStatus(trainMins, walkMins, bufferMins) {
+  if (trainMins === null) return { light: "gray", message: "No trains found", sub: "" };
+  const waitAtPlatform = trainMins - walkMins;
+
+  if (waitAtPlatform < 0) {
+    return { light: "red", message: "You'd miss it", sub: `Next train in ${trainMins} min` };
+  } else if (waitAtPlatform === 0) {
+    return { light: "green", message: "Leave RIGHT NOW", sub: `Train in ${trainMins} min · 0 min wait` };
+  } else if (waitAtPlatform <= bufferMins) {
+    return { light: "green", message: `Leave in ${waitAtPlatform} min`, sub: `Train in ${trainMins} min · ${waitAtPlatform} min wait` };
+  } else if (waitAtPlatform <= bufferMins + 3) {
+    return { light: "yellow", message: `Leave in ${waitAtPlatform - bufferMins + 1} min`, sub: `Train in ${trainMins} min · ${waitAtPlatform} min wait` };
+  } else {
+    return { light: "red", message: `Wait ${waitAtPlatform - bufferMins} more min`, sub: `Train in ${trainMins} min · ${waitAtPlatform} min wait at platform` };
+  }
+}
+
+function HorizontalStoplight({ light }) {
+  const on = { red: "#FF3B30", yellow: "#FFCC00", green: "#34C759" };
+  const off = "#2a2a2a";
+  const glow = light !== "gray" ? on[light] : "transparent";
+
+  return (
+    <div style={{
+      background: "#1a1a1a",
+      borderRadius: 20,
+      padding: "5px 8px",
+      display: "flex",
+      flexDirection: "row",
+      gap: 5,
+      boxShadow: `0 0 10px ${glow}55`,
+      border: "1.5px solid #2a2a2a",
+      flexShrink: 0,
+    }}>
+      {["red","yellow","green"].map(c => (
+        <div key={c} style={{
+          width: 16, height: 16, borderRadius: "50%",
+          background: light === c ? on[c] : off,
+          boxShadow: light === c ? `0 0 8px ${on[c]}` : "none",
+        }}/>
+      ))}
+    </div>
+  );
+}
+
+function CommuteCard({ commuteKey }) {
+  const commute = COMMUTES[commuteKey];
+  const [state, setState] = useState({ light: "gray", message: "Loading...", sub: "" });
+  const [loading, setLoading] = useState(true);
+  const [trainMins, setTrainMins] = useState(null);
+
+  const refresh = async () => {
+    setLoading(true);
+    const result = await fetchLiveArrivals(commute.stopId, commute.line);
+    // Find next train in the right direction
+    const matching = result.arrivals
+      .filter(a => a.destNm.toLowerCase().includes(commute.destKeyword))
+      .sort((a, b) => a._mins - b._mins);
+    const next = matching[0] || null;
+    const mins = next ? next._mins : null;
+    setTrainMins(mins);
+    setState(getStoplightStatus(mins, commute.walkMins, commute.bufferMins));
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    refresh();
+    const t = setInterval(refresh, 30000);
+    return () => clearInterval(t);
+  }, []);
+
+  const lightColors = { green: "#34C759", yellow: "#FFCC00", red: "#FF3B30", gray: COLORS.gray400 };
+  const bgColors = {
+    green: "linear-gradient(135deg, #0d2b1a, #0a1f12)",
+    yellow: "linear-gradient(135deg, #2b2500, #1f1b00)",
+    red: "linear-gradient(135deg, #2b0d0d, #1f0808)",
+    gray: "linear-gradient(135deg, #1e2533, #161c28)",
+  };
+  const borderColors = { green: "#34C75933", yellow: "#FFCC0033", red: "#FF3B3033", gray: "#ffffff10" };
+
+  return (
+    <button onClick={refresh} style={{
+      flex: 1,
+      background: bgColors[state.light],
+      border: `1.5px solid ${borderColors[state.light]}`,
+      borderRadius: 16,
+      padding: "12px 14px",
+      cursor: "pointer",
+      textAlign: "left",
+      display: "flex",
+      flexDirection: "column",
+      gap: 8,
+    }}>
+      {/* Top row: icon + label + stoplight */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <span style={{ fontSize: 14 }}>{commute.icon}</span>
+          <span style={{ fontSize: 11, fontWeight: 700, color: "#9AA3B0", letterSpacing: "0.06em", fontFamily: "'DM Sans',sans-serif", textTransform: "uppercase" }}>
+            {commute.label}
+          </span>
+        </div>
+        <HorizontalStoplight light={state.light} />
+      </div>
+
+      {/* Message */}
+      <div>
+        <div style={{
+          fontSize: 15, fontWeight: 800, fontFamily: "'DM Sans',sans-serif",
+          color: lightColors[state.light],
+          lineHeight: 1.2,
+        }}>
+          {loading ? "Checking..." : state.message}
+        </div>
+        {!loading && state.sub && (
+          <div style={{ fontSize: 10, color: "#5A6472", marginTop: 3, fontFamily: "'DM Sans',sans-serif" }}>
+            {state.sub}
+          </div>
+        )}
+      </div>
+
+      {/* Footer */}
+      <div style={{ fontSize: 9, color: "#3a4255", fontFamily: "'DM Sans',sans-serif", letterSpacing: "0.04em" }}>
+        {commute.stopName} · {commute.walkMins} min walk · tap to refresh
+      </div>
+    </button>
+  );
+}
+
 function TopBar({ view, line, stop, onBack }) {
   const ld = CTA_LINES[line];
   const titles = { lines: "Transit Lines", stops: `${line} Line`, arrivals: stop || "" };
@@ -156,7 +307,6 @@ function FavoriteCard({ fav, onSelect, onRemove }) {
   const ld = CTA_LINES[fav.line];
   return (
     <div style={{ background:COLORS.white,borderRadius:16,border:`1.5px solid ${COLORS.gray200}`,overflow:"hidden",boxShadow:"0 1px 4px rgba(0,0,0,0.06)",display:"flex",alignItems:"stretch" }}>
-      {/* Color strip */}
       <div style={{ width:5,background:ld.color,flexShrink:0 }}/>
       <button onClick={onSelect} style={{ flex:1,background:"transparent",border:"none",padding:"14px 12px",cursor:"pointer",textAlign:"left",display:"flex",alignItems:"center",gap:12 }}>
         <div style={{ width:36,height:36,borderRadius:10,background:ld.color,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>
@@ -168,9 +318,7 @@ function FavoriteCard({ fav, onSelect, onRemove }) {
         </div>
         <div style={{ fontSize:20,color:COLORS.gray400,fontWeight:200 }}>›</div>
       </button>
-      <button onClick={onRemove} style={{ padding:"0 14px",background:"transparent",border:"none",borderLeft:`1px solid ${COLORS.gray100}`,cursor:"pointer",color:COLORS.gray400,fontSize:18,display:"flex",alignItems:"center" }}>
-        ⭐
-      </button>
+      <button onClick={onRemove} style={{ padding:"0 14px",background:"transparent",border:"none",borderLeft:`1px solid ${COLORS.gray100}`,cursor:"pointer",fontSize:18,display:"flex",alignItems:"center" }}>⭐</button>
     </div>
   );
 }
@@ -227,7 +375,6 @@ function DirectionColumn({ label, arrivals, lineColor }) {
         <div style={{ padding:"16px 12px",textAlign:"center" }}>
           <div style={{ fontSize:18,marginBottom:4 }}>🌙</div>
           <div style={{ fontSize:11,fontWeight:600,color:COLORS.gray600,fontFamily:"'DM Sans',sans-serif" }}>No service</div>
-          <div style={{ fontSize:10,color:COLORS.gray400,marginTop:2,fontFamily:"'DM Sans',sans-serif",lineHeight:1.4 }}>Check back during operating hours</div>
         </div>
       ) : (
         arrivals.slice(0,3).map((a,i) => {
@@ -326,21 +473,29 @@ export default function CTATracker() {
 
         <div style={{ flex:1,overflowY:"auto",padding:"14px 16px 40px",zIndex:2,position:"relative" }}>
 
-          {/* HOME / LINES */}
           {view==="lines" && (
             <div>
-              {/* Status bar */}
+              {/* Commute section */}
+              <div style={{ marginBottom:20 }}>
+                <div style={{ fontSize:11,fontWeight:700,color:COLORS.gray400,letterSpacing:"0.09em",textTransform:"uppercase",marginBottom:10,paddingLeft:2 }}>
+                  🚦 My Commute
+                </div>
+                <div style={{ display:"flex",gap:10 }}>
+                  <CommuteCard commuteKey="toWork" />
+                  <CommuteCard commuteKey="toHome" />
+                </div>
+              </div>
+
+              {/* Status */}
               <div style={{ background:COLORS.white,borderRadius:14,padding:"11px 16px",marginBottom:16,display:"flex",alignItems:"center",gap:8,boxShadow:"0 1px 4px rgba(0,0,0,0.06)",border:`1px solid ${COLORS.gray200}` }}>
                 <div style={{ width:8,height:8,borderRadius:"50%",background:COLORS.success }}/>
                 <span style={{ fontSize:13,color:COLORS.gray600,fontWeight:500 }}>Live Data Ready · {timeStr}</span>
               </div>
 
-              {/* Favorites section */}
+              {/* Favorites */}
               {favorites.length > 0 && (
                 <div style={{ marginBottom:20 }}>
-                  <div style={{ fontSize:11,fontWeight:700,color:COLORS.gray400,letterSpacing:"0.09em",textTransform:"uppercase",marginBottom:10,paddingLeft:2 }}>
-                    ⭐ Favorite Stations
-                  </div>
+                  <div style={{ fontSize:11,fontWeight:700,color:COLORS.gray400,letterSpacing:"0.09em",textTransform:"uppercase",marginBottom:10,paddingLeft:2 }}>⭐ Favorites</div>
                   <div style={{ display:"flex",flexDirection:"column",gap:8 }}>
                     {favorites.map((fav,i) => (
                       <div key={fav.key} className="enter" style={{ animationDelay:`${i*40}ms`,animationFillMode:"both" }}>
@@ -355,7 +510,7 @@ export default function CTATracker() {
                 </div>
               )}
 
-              {/* Lines section */}
+              {/* Lines */}
               <div style={{ fontSize:11,fontWeight:700,color:COLORS.gray400,letterSpacing:"0.09em",textTransform:"uppercase",marginBottom:10,paddingLeft:2 }}>All Lines</div>
               <div style={{ display:"flex",flexDirection:"column",gap:10 }}>
                 {Object.entries(CTA_LINES).map(([name,data],i)=>(
@@ -367,7 +522,6 @@ export default function CTATracker() {
             </div>
           )}
 
-          {/* STOPS */}
           {view==="stops" && ld && (
             <div>
               <div style={{ background:ld.color,borderRadius:16,padding:"14px 18px",marginBottom:16,boxShadow:`0 4px 16px ${ld.color}50`,display:"flex",alignItems:"center",gap:14 }}>
@@ -380,12 +534,7 @@ export default function CTATracker() {
               <div style={{ fontSize:11,fontWeight:700,color:COLORS.gray400,letterSpacing:"0.09em",textTransform:"uppercase",marginBottom:10,paddingLeft:2 }}>Select a station</div>
               <div style={{ background:COLORS.white,borderRadius:16,overflow:"hidden",boxShadow:"0 1px 5px rgba(0,0,0,0.07)",border:`1px solid ${COLORS.gray200}` }}>
                 {ld.stops.map((stop,i)=>(
-                  <StopRow
-                    key={stop.id}
-                    name={stop.name}
-                    lineColor={ld.color}
-                    index={i}
-                    total={ld.stops.length}
+                  <StopRow key={stop.id} name={stop.name} lineColor={ld.color} index={i} total={ld.stops.length}
                     onSelect={()=>selectStop(stop)}
                     isFav={isFav(selectedLine, stop.id)}
                     onToggleFav={()=>toggleFav(selectedLine, stop)}
@@ -395,7 +544,6 @@ export default function CTATracker() {
             </div>
           )}
 
-          {/* ARRIVALS */}
           {view==="arrivals" && ld && (
             <div>
               <div style={{ background:COLORS.white,borderRadius:16,padding:"16px 18px",marginBottom:16,boxShadow:"0 1px 6px rgba(0,0,0,0.08)",border:`1px solid ${COLORS.gray200}`,display:"flex",alignItems:"center",gap:14 }}>
@@ -420,9 +568,9 @@ export default function CTATracker() {
                 <div style={{ background:COLORS.warningBg,borderRadius:14,padding:"14px 16px",marginBottom:14,display:"flex",gap:12,alignItems:"flex-start",border:`1px solid #FCD34D` }}>
                   <span style={{ fontSize:20,flexShrink:0 }}>🌙</span>
                   <div>
-                    <div style={{ fontSize:13,fontWeight:700,color:COLORS.warning,fontFamily:"'DM Sans',sans-serif" }}>No trains currently running</div>
-                    <div style={{ fontSize:12,color:COLORS.warning,marginTop:3,lineHeight:1.5,fontFamily:"'DM Sans',sans-serif" }}>
-                      The {selectedLine} Line is not in service at this time. Most CTA lines run daily from around 4 AM to 1 AM. The Red and Blue lines run 24 hours.
+                    <div style={{ fontSize:13,fontWeight:700,color:COLORS.warning }}>No trains currently running</div>
+                    <div style={{ fontSize:12,color:COLORS.warning,marginTop:3,lineHeight:1.5 }}>
+                      The {selectedLine} Line is not in service. Most lines run 4 AM–1 AM. Red & Blue run 24 hours.
                     </div>
                   </div>
                 </div>
@@ -451,12 +599,11 @@ export default function CTATracker() {
           )}
         </div>
 
-        {/* Bottom tab bar - simplified to just Lines */}
         <div style={{ background:COLORS.white,borderTop:`1px solid ${COLORS.gray200}`,display:"flex",paddingBottom:"env(safe-area-inset-bottom,8px)" }}>
           {[{icon:"🚇",label:"Lines",v:"lines"},{icon:"⚙️",label:"Settings",v:"settings"}].map(t=>(
             <button key={t.v} onClick={()=>{ if(t.v==="lines"){ setView("lines"); setSelectedLine(null); setSelectedStop(null); }}} style={{ flex:1,padding:"10px 0",background:"none",border:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:3 }}>
               <span style={{ fontSize:22 }}>{t.icon}</span>
-              <span style={{ fontSize:10,fontWeight:700,letterSpacing:"0.03em",fontFamily:"'DM Sans',sans-serif",color:(t.v==="lines")?COLORS.navy:COLORS.gray400 }}>{t.label}</span>
+              <span style={{ fontSize:10,fontWeight:700,letterSpacing:"0.03em",fontFamily:"'DM Sans',sans-serif",color:t.v==="lines"?COLORS.navy:COLORS.gray400 }}>{t.label}</span>
               {t.v==="lines"&&<div style={{ width:4,height:4,borderRadius:"50%",background:COLORS.navy }}/>}
             </button>
           ))}
