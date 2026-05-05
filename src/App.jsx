@@ -262,14 +262,14 @@ function CommuteCard({ commuteKey }) {
           {loading ? "Checking..." : state.message}
         </div>
         {!loading && state.sub && (
-          <div style={{ fontSize: 10, color: "#5A6472", marginTop: 3, fontFamily: "'DM Sans',sans-serif" }}>
+          <div style={{ fontSize: 10, color: "#9AA3B0", marginTop: 3, fontFamily: "'DM Sans',sans-serif" }}>
             {state.sub}
           </div>
         )}
       </div>
 
       {/* Footer */}
-      <div style={{ fontSize: 9, color: "#3a4255", fontFamily: "'DM Sans',sans-serif", letterSpacing: "0.04em" }}>
+      <div style={{ fontSize: 9, color: "#6B7A94", fontFamily: "'DM Sans',sans-serif", letterSpacing: "0.04em" }}>
         {commute.stopName} · {commute.walkMins} min walk · tap to refresh
       </div>
     </button>
