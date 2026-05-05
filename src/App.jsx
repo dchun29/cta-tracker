@@ -34,7 +34,7 @@ const COMMUTES = {
     stopId: "40790",
     stopName: "Monroe",
     line: "Blue",
-    destKeyword: "o'hare",   // matches "O'Hare"
+    destKeyword: "hare",   // matches "O'Hare"
     walkMins: 6,
     bufferMins: 3,
   },
